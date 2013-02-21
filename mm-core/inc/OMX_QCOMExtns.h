@@ -378,6 +378,9 @@ enum OMX_QCOM_EXTN_INDEXTYPE
 
     /*"OMX.QCOM.index.param.video.QPRange" */
     OMX_QcomIndexParamVideoQPRange = 0x7F000023,
+
+    /*"OMX.QCOM.index.config.TurboMode"*/
+    OMX_QcomIndexConfigTurboMode = 0x7F000024,
 };
 
 /**
