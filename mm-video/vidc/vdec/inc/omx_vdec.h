@@ -733,6 +733,7 @@ private:
     OMX_BOOL m_out_bPopulated;
     // encapsulate the waiting states.
     unsigned int m_flags;
+    OMX_BOOL m_out_sync_frm_received;
 
 #ifdef _ANDROID_
     // Heap pointer to frame buffers
