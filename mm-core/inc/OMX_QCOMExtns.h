@@ -381,6 +381,9 @@ enum OMX_QCOM_EXTN_INDEXTYPE
 
     /*"OMX.QCOM.index.config.TurboMode"*/
     OMX_QcomIndexConfigTurboMode = 0x7F000024,
+
+    /*"OMX.QCOM.index.param.video.PerformanceLevel" */
+    OMX_QcomIndexParamVideoPerformanceLevel = 0x7F000025,
 };
 
 /**
@@ -651,6 +654,17 @@ typedef struct OMX_QCOM_EXTRADATA_FRAMEINFO
    OMX_U32                nConcealedMacroblocks;
    OMX_U32                nFrameRate;
 } OMX_QCOM_EXTRADATA_FRAMEINFO;
+
+/**
+* This structure describes the parameters corresponding to the
+* OMX_QCOM_QUERY_PERFORMANCE extension. This parameter can be set
+* dynamically during any state except the state invalid. This is primarily
+* used to get the number of MBs being processed per second by video module.
+*/
+typedef struct OMX_QCOM_QUERY_PERFORMANCE
+{
+   OMX_U32 performance;
+} OMX_QCOM_QUERY_PERFORMANCE;
 
 typedef struct OMX_QCOM_EXTRADATA_FRAMEDIMENSION
 {
