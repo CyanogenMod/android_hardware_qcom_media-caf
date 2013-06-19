@@ -2214,6 +2214,7 @@ void DashCodec::sendFormatChange() {
             CHECK_LE(rect->nTop + rect->nHeight - 1, videoDef->nFrameHeight);
 
             if( mSmoothStreaming ) {
+#ifdef QCOM_BSP
                //call Update buffer geometry here
                 ALOGE("Calling native window update buffer geometry");
                 status_t err = mNativeWindow.get()->perform(mNativeWindow.get(),
@@ -2222,6 +2223,7 @@ void DashCodec::sendFormatChange() {
                if( err != OK ) {
                    ALOGE("native_window_update_buffers_geometry failed in SS mode %d", err);
                }
+#endif
 
            }
 
