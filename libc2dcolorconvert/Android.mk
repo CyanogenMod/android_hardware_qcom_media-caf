@@ -2,14 +2,22 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
+ifeq ($(TARGET_QCOM_DISPLAY_VARIANT),caf)
+DISPLAY := display-caf
+else
+DISPLAY := display
+endif
+
 LOCAL_SRC_FILES := \
         C2DColorConverter.cpp
 
 LOCAL_C_INCLUDES := \
     $(TOP)/frameworks/av/include/media/stagefright \
     $(TOP)/frameworks/native/include/media/openmax \
-    $(TOP)/hardware/qcom/display/libcopybit
+    $(TOP)/hardware/qcom/$(DISPLAY)/libcopybit
+
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
+
 LOCAL_SHARED_LIBRARIES := liblog libdl
 
 LOCAL_MODULE_TAGS := optional

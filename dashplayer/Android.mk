@@ -41,7 +41,7 @@ LOCAL_C_INCLUDES := \
 	$(TOP)/frameworks/av/media/libstagefright/include             \
 	$(TOP)/frameworks/av/media/libstagefright/mpeg2ts             \
 	$(TOP)/frameworks/av/media/libstagefright/rtsp                \
-	$(TOP)/hardware/qcom/media/mm-core/inc                        \
+	$(TOP)/hardware/qcom/media-caf/mm-core/inc                        \
 
 #ifeq ($(PLATFORM_SDK_VERSION), 18)
 ifeq ($(call is-platform-sdk-version-at-least,18),true)
