@@ -379,11 +379,13 @@ enum OMX_QCOM_EXTN_INDEXTYPE
     /*"OMX.QCOM.index.param.video.QPRange" */
     OMX_QcomIndexParamVideoQPRange = 0x7F000023,
 
+    OMX_QcomIndexParamEnableVUIStreamRestrictFlag = 0x7F000024,
+
     /*"OMX.QCOM.index.config.TurboMode"*/
-    OMX_QcomIndexConfigTurboMode = 0x7F000024,
+    OMX_QcomIndexConfigTurboMode = 0x7F000025,
 
     /*"OMX.QCOM.index.param.video.PerformanceLevel" */
-    OMX_QcomIndexParamVideoPerformanceLevel = 0x7F000025,
+    OMX_QcomIndexParamVideoPerformanceLevel = 0x7F000026,
 };
 
 /**
@@ -913,6 +915,15 @@ typedef enum {
     QOMX_VIDEO_CONTENT_LR_VIEW = 1,
     QOMX_VIDEO_CONTENT_RL_VIEW = 2,
 } QOMX_VIDEO_CONTENT_INTERPRETATION;
+
+// A pointer to this struct is passed to OMX_SetParameter when the extension
+// index for the 'OMX.google.android.index.setVUIStreamRestrictFlag' extension
+// is given.
+typedef struct QOMX_VUI_BITSTREAM_RESTRICT {
+    OMX_U32 nSize;
+    OMX_VERSIONTYPE nVersion;
+    OMX_BOOL bEnable;
+} QOMX_VUI_BITSTREAM_RESTRICT;
 
 #ifdef __cplusplus
 }

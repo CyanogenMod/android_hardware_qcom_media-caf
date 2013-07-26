@@ -37,6 +37,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef USE_ION
 #include <linux/msm_ion.h>
 #endif
+#ifdef _ANDROID_
+#include <cutils/properties.h>
+#endif
 
 #define MPEG4_SP_START 0
 #define MPEG4_ASP_START (MPEG4_SP_START + 8)
@@ -148,9 +151,23 @@ venc_dev::venc_dev(class omx_venc *venc_class)
   m_max_allowed_bitrate_check = false;
   m_eLevel = 0;
   m_eProfile = 0;
+  m_use_uncache_buffers = false;
   pthread_mutex_init(&loaded_start_stop_mlock, NULL);
   pthread_cond_init (&loaded_start_stop_cond, NULL);
   venc_encoder = reinterpret_cast<omx_venc*>(venc_class);
+
+#ifdef _ANDROID_
+  /* by default cache buffers enabled, to */
+  /* use uncache buffers, set below command */
+  /* setprop persist.camera.mem.usecache 0 */
+  char cache_value[PROPERTY_VALUE_MAX] = {0};
+  property_get("persist.camera.mem.usecache", cache_value, "1");
+  if (!atoi(cache_value))
+  {
+    m_use_uncache_buffers = true;
+    DEBUG_PRINT_HIGH("persist.camera.mem.usecache value is %d", atoi(cache_value));
+  }
+#endif
   DEBUG_PRINT_LOW("venc_dev constructor");
 }
 
@@ -1042,6 +1059,18 @@ bool venc_dev::venc_set_param(void *paramData,OMX_INDEXTYPE index )
        }
        break;
     }
+  case OMX_QcomIndexParamEnableVUIStreamRestrictFlag:
+    {
+       QOMX_VUI_BITSTREAM_RESTRICT *pParam =
+          (QOMX_VUI_BITSTREAM_RESTRICT *)paramData;
+
+       if(venc_set_bitstream_restrict_in_vui(pParam->bEnable) == false)
+       {
+         DEBUG_PRINT_ERROR("Setting bitstream_restrict flag in VUI failed");
+         return false;
+       }
+       break;
+    }
   case OMX_IndexParamVideoSliceFMO:
   default:
 	  DEBUG_PRINT_ERROR("\nERROR: Unsupported parameter in venc_set_param: %u",
@@ -1813,7 +1842,19 @@ bool venc_dev::venc_set_inband_video_header(OMX_BOOL enable)
   DEBUG_PRINT_HIGH("Set inband sps/pps: %d", enable);
   if(ioctl(m_nDriver_fd, VEN_IOCTL_SET_SPS_PPS_FOR_IDR, (void *)&ioctl_msg) < 0)
   {
-    DEBUG_PRINT_ERROR("Request for setting slice delivery mode failed");
+    DEBUG_PRINT_ERROR("Request for inband sps/pps failed");
+    return false;
+  }
+  return true;
+}
+
+bool venc_dev::venc_set_bitstream_restrict_in_vui(OMX_BOOL enable)
+{
+  venc_ioctl_msg ioctl_msg = {NULL, NULL};
+  DEBUG_PRINT_HIGH("Set bistream_restrict in vui: %d", enable);
+  if(ioctl(m_nDriver_fd, VEN_IOCTL_SET_VUI_BITSTREAM_RESTRICT_FLAG, (void *)&ioctl_msg) < 0)
+  {
+    DEBUG_PRINT_ERROR("Request for setting bitstream_restrict flag in VUI failed");
     return false;
   }
   return true;
@@ -3061,3 +3102,11 @@ bool venc_dev::venc_set_meta_mode(bool mode)
   return true;
 }
 #endif
+
+bool venc_dev::venc_get_uncache_flag()
+{
+  DEBUG_PRINT_LOW("%s: m_use_uncache_buffers = %d", __func__,
+     m_use_uncache_buffers);
+  return m_use_uncache_buffers;
+}
+

@@ -82,6 +82,7 @@ public:
   bool venc_loaded_stop(void);
   bool venc_loaded_start_done(void);
   bool venc_loaded_stop_done(void);
+  bool venc_get_uncache_flag(void);
   OMX_U32 m_nDriver_fd;
   bool m_profile_set;
   bool m_level_set;
@@ -107,6 +108,8 @@ public:
   int m_eProfile;
   int m_eLevel;
   int etb_count;
+  bool m_use_uncache_buffers;
+
 private:
   class omx_venc *venc_encoder;
   struct venc_basecfg             m_sVenc_cfg;
@@ -149,6 +152,7 @@ private:
   void venc_config_print();
   bool venc_set_slice_delivery_mode(OMX_BOOL enable);
   bool venc_set_inband_video_header(OMX_BOOL enable);
+  bool venc_set_bitstream_restrict_in_vui(OMX_BOOL enable);
 #ifdef MAX_RES_1080P
   OMX_U32 pmem_free();
   OMX_U32 pmem_allocate(OMX_U32 size, OMX_U32 alignment, OMX_U32 count);

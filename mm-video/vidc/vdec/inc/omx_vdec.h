@@ -851,6 +851,8 @@ private:
     bool streaming[MAX_PORT];
 #endif
     unsigned int m_fill_output_msg;
+    bool m_use_uncache_buffers;
+
     class allocate_color_convert_buf {
     public:
         allocate_color_convert_buf();
@@ -903,6 +905,9 @@ private:
     bool msg_thread_created;
     bool async_thread_created;
     bool m_turbo_mode;
+    static int m_vdec_num_instances;
+    static int m_vdec_ion_devicefd;
+    static pthread_mutex_t m_vdec_ionlock;
 };
 
 #ifdef _COPPER_
