@@ -416,8 +416,14 @@ void DashPlayer::onMessageReceived(const sp<AMessage> &msg) {
                          err);
                 }
 
-                if((mRenderer != NULL) && (track == kAudio || track == kVideo)) {
+                if(mRenderer != NULL)
+                {
+                  if((track == kAudio && !IsFlushingState(mFlushingAudio)) || (track == kVideo && !IsFlushingState(mFlushingVideo))) {
                     mRenderer->queueEOS(track, err);
+                  }
+                  else{
+                    ALOGE("FlushingState for %s. Decoder EOS not queued to renderer", mTrackName);
+                  }
                 }
             } else if (what == DashCodec::kWhatFlushCompleted) {
                 ALOGV("@@@@:: Dashplayer :: MESSAGE FROM DASHCODEC +++++++++++++++++++++++++++++++ kWhatFlushCompleted");
@@ -552,9 +558,17 @@ void DashPlayer::onMessageReceived(const sp<AMessage> &msg) {
             } else if (what == DashCodec::kWhatError) {
                 ALOGE("Received error from %s decoder, aborting playback.",
                        mTrackName);
-                if((mRenderer != NULL) && (track == kAudio || track == kVideo)) {
+                if(mRenderer != NULL)
+                {
+                  if((track == kAudio && !IsFlushingState(mFlushingAudio)) ||
+                     (track == kVideo && !IsFlushingState(mFlushingVideo)))
+                  {
                     ALOGV("@@@@:: Dashplayer :: MESSAGE FROM DASHCODEC +++++++++++++++++++++++++++++++ DashCodec::kWhatError:: %s",track == kAudio ? "audio" : "video");
                     mRenderer->queueEOS(track, UNKNOWN_ERROR);
+                }
+                  else{
+                    ALOGE("EOS not queued for %s track", track);
+                  }
                 }
             } else if (what == DashCodec::kWhatDrainThisBuffer) {
                 if(track == kAudio || track == kVideo) {
@@ -871,58 +885,63 @@ void DashPlayer::onMessageReceived(const sp<AMessage> &msg) {
             Mutex::Autolock autoLock(mLock);
             ALOGV("kWhatSourceNotify");
 
-            CHECK(mSource != NULL);
-            int64_t track;
+            if(mSource != NULL) {
+                int64_t track;
 
-            sp<AMessage> sourceRequest;
-            ALOGD("kWhatSourceNotify - looking for source-request");
+                sp<AMessage> sourceRequest;
+                ALOGD("kWhatSourceNotify - looking for source-request");
 
-            // attempt to find message by different names
-            bool msgFound = msg->findMessage("source-request", &sourceRequest);
-            int32_t handled;
-            if (!msgFound){
-                ALOGD("kWhatSourceNotify source-request not found, trying using sourceRequestID");
-                char srName[] = "source-request00";
-                srName[strlen("source-request")] += mSRid/10;
-                srName[strlen("source-request")+sizeof(char)] += mSRid%10;
-                msgFound = msg->findMessage(srName, &sourceRequest);
-                if(msgFound)
-                    mSRid = (mSRid+1)%SRMax;
-            }
-
-            CHECK(msgFound);
-            int32_t what;
-            CHECK(sourceRequest->findInt32("what", &what));
-            sourceRequest->findInt64("track", &track);
-            getTrackName((int)track,mTrackName);
-
-            if (what == kWhatBufferingStart) {
-              ALOGE("Source Notified Buffering Start for %s ",mTrackName);
-              if (mBufferingNotification == false) {
-                 mBufferingNotification = true;
-                 notifyListener(MEDIA_INFO, MEDIA_INFO_BUFFERING_START, 0);
-              }
-              else {
-                 ALOGE("Buffering Start Event Already Notified mBufferingNotification(%d)",
-                       mBufferingNotification);
-              }
-            }
-            else if(what == kWhatBufferingEnd) {
-                if (mBufferingNotification) {
-                  ALOGE("Source Notified Buffering End for %s ",mTrackName);
-                        mBufferingNotification = false;
-                  notifyListener(MEDIA_INFO, MEDIA_INFO_BUFFERING_END, 0);
-                  if(mStats != NULL) {
-                    mStats->notifyBufferingEvent();
-                  }
+                // attempt to find message by different names
+                bool msgFound = msg->findMessage("source-request", &sourceRequest);
+                int32_t handled;
+                if (!msgFound) {
+                    ALOGD("kWhatSourceNotify source-request not found, trying using sourceRequestID");
+                    char srName[] = "source-request00";
+                    srName[strlen("source-request")] += mSRid/10;
+                    srName[strlen("source-request")+sizeof(char)] += mSRid%10;
+                    msgFound = msg->findMessage(srName, &sourceRequest);
+                    if(msgFound)
+                        mSRid = (mSRid+1)%SRMax;
                 }
-                else {
-                  ALOGE("No need to notify Buffering end as mBufferingNotification is (%d) "
-                        ,mBufferingNotification);
+
+                if(msgFound) {
+                    int32_t what;
+                    CHECK(sourceRequest->findInt32("what", &what));
+                    sourceRequest->findInt64("track", &track);
+                    getTrackName((int)track,mTrackName);
+
+                    if (what == kWhatBufferingStart) {
+                      ALOGE("Source Notified Buffering Start for %s ",mTrackName);
+                      if (mBufferingNotification == false) {
+                         mBufferingNotification = true;
+                         notifyListener(MEDIA_INFO, MEDIA_INFO_BUFFERING_START, 0);
+                      }
+                      else {
+                         ALOGE("Buffering Start Event Already Notified mBufferingNotification(%d)",
+                               mBufferingNotification);
+                      }
+                    }
+                    else if(what == kWhatBufferingEnd) {
+                        if (mBufferingNotification) {
+                          ALOGE("Source Notified Buffering End for %s ",mTrackName);
+                                mBufferingNotification = false;
+                          notifyListener(MEDIA_INFO, MEDIA_INFO_BUFFERING_END, 0);
+                          if(mStats != NULL) {
+                            mStats->notifyBufferingEvent();
+                          }
+                        }
+                        else {
+                          ALOGE("No need to notify Buffering end as mBufferingNotification is (%d) "
+                                ,mBufferingNotification);
+                        }
+                    }
                 }
+            }
+            else {
+              ALOGE("kWhatSourceNotify - Source object does not exist anymore");
             }
             break;
-  }
+        }
 
         default:
             TRESPASS();
