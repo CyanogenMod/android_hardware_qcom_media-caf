@@ -46,6 +46,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================== */
 #include "h264_utils.h"
+#include "vidc_debug.h"
 #include "extra_data_handler.h"
 #include <string.h>
 #include <stdlib.h>
@@ -106,7 +107,7 @@ void RbspParser::advance ()
          * I don't see a problem here
          */
         //throw false;
-        ALOGV("H264Parser-->NEED TO THROW THE EXCEPTION...\n");
+        DEBUG_PRINT_LOW("H264Parser-->NEED TO THROW THE EXCEPTION...\n");
     }
     cursor <<= 8;
     //cursor |= static_cast<uint32> (*pos);
@@ -268,7 +269,7 @@ boolean H264_Utils::extract_rbsp(OMX_IN   OMX_U8  *buffer,
     do {
       if(pos >= buffer_length)
       {
-        ALOGE("ERROR: In %s() - line %d", __func__, __LINE__);
+        DEBUG_PRINT_ERROR("ERROR: In %s() - line %d", __func__, __LINE__);
         return false;
       }
 
@@ -289,28 +290,28 @@ boolean H264_Utils::extract_rbsp(OMX_IN   OMX_U8  *buffer,
     }
     if (nal_len >= buffer_length)
     {
-      ALOGE("ERROR: In %s() - line %d", __func__, __LINE__);
+      DEBUG_PRINT_ERROR("ERROR: In %s() - line %d", __func__, __LINE__);
       return false;
     }
   }
 
   if (nal_len > buffer_length)
   {
-    ALOGE("ERROR: In %s() - line %d", __func__, __LINE__);
+    DEBUG_PRINT_ERROR("ERROR: In %s() - line %d", __func__, __LINE__);
     return false;
   }
   if(pos + 1 > (nal_len + sizeofNalLengthField))
   {
-    ALOGE("ERROR: In %s() - line %d", __func__, __LINE__);
+    DEBUG_PRINT_ERROR("ERROR: In %s() - line %d", __func__, __LINE__);
     return false;
   }
   if (nal_unit->forbidden_zero_bit = (buffer[pos] & 0x80))
   {
-    ALOGE("ERROR: In %s() - line %d", __func__, __LINE__);
+    DEBUG_PRINT_ERROR("ERROR: In %s() - line %d", __func__, __LINE__);
   }
   nal_unit->nal_ref_idc   = (buffer[pos] & 0x60) >> 5;
   nal_unit->nalu_type = buffer[pos++] & 0x1f;
-  ALOGV("\n@#@# Pos = %x NalType = %x buflen = %d",
+  DEBUG_PRINT_LOW("\n@#@# Pos = %x NalType = %x buflen = %d",
       pos-1, nal_unit->nalu_type, buffer_length);
   *rbsp_length = 0;
 
@@ -391,14 +392,14 @@ bool H264_Utils::isNewFrame(OMX_BUFFERHEADERTYPE *p_buf_hdr,
     OMX_IN OMX_U32 buffer_length = p_buf_hdr->nFilledLen;
     bool eRet = true;
 
-    ALOGV("isNewFrame: buffer %p buffer_length %d "
+    DEBUG_PRINT_LOW("isNewFrame: buffer %p buffer_length %d "
         "size_of_nal_length_field %d\n", buffer, buffer_length,
         size_of_nal_length_field);
 
     if ( false == extract_rbsp(buffer, buffer_length, size_of_nal_length_field,
                                m_rbspBytes, &numBytesInRBSP, &nal_unit) )
     {
-        ALOGE("ERROR: In %s() - extract_rbsp() failed", __func__);
+        DEBUG_PRINT_ERROR("ERROR: In %s() - extract_rbsp() failed", __func__);
         isNewFrame = OMX_FALSE;
         eRet = false;
     }
@@ -410,7 +411,7 @@ bool H264_Utils::isNewFrame(OMX_BUFFERHEADERTYPE *p_buf_hdr,
         case NALU_TYPE_IDR:
         case NALU_TYPE_NON_IDR:
         {
-          ALOGV("\n AU Boundary with NAL type %d ",nal_unit.nalu_type);
+          DEBUG_PRINT_LOW("\n AU Boundary with NAL type %d ",nal_unit.nalu_type);
           if (m_forceToStichNextNAL)
           {
             isNewFrame = OMX_FALSE;
@@ -441,7 +442,7 @@ bool H264_Utils::isNewFrame(OMX_BUFFERHEADERTYPE *p_buf_hdr,
         case NALU_TYPE_PPS:
         case NALU_TYPE_SEI:
         {
-          ALOGV("\n Non-AU boundary with NAL type %d", nal_unit.nalu_type);
+          DEBUG_PRINT_LOW("\n Non-AU boundary with NAL type %d", nal_unit.nalu_type);
           if(m_au_data)
           {
             isNewFrame = OMX_TRUE;
@@ -468,7 +469,7 @@ bool H264_Utils::isNewFrame(OMX_BUFFERHEADERTYPE *p_buf_hdr,
       } // end of switch
     } // end of if
     m_prv_nalu = nal_unit;
-    ALOGV("get_h264_nal_type - newFrame value %d\n",isNewFrame);
+    DEBUG_PRINT_LOW("get_h264_nal_type - newFrame value %d\n",isNewFrame);
     return eRet;
 }
 
@@ -494,10 +495,10 @@ void perf_metrics::stop()
 void perf_metrics::end(OMX_U32 units_cntr)
 {
   stop();
-  ALOGV("--> Processing time : [%.2f] Sec", (float)proc_time / 1e6);
+  DEBUG_PRINT_LOW("--> Processing time : [%.2f] Sec", (float)proc_time / 1e6);
   if (units_cntr)
   {
-    ALOGV("--> Avrg proc time  : [%.2f] mSec", proc_time / (float)(units_cntr * 1e3));
+    DEBUG_PRINT_LOW("--> Avrg proc time  : [%.2f] mSec", proc_time / (float)(units_cntr * 1e3));
   }
 }
 
@@ -527,11 +528,11 @@ h264_stream_parser::h264_stream_parser()
   panscan_hdl = new panscan_handler();
   if (!panscan_hdl)
   {
-    ALOGE("ERROR: Panscan hdl was not allocated!");
+    DEBUG_PRINT_ERROR("ERROR: Panscan hdl was not allocated!");
   }
   else if (!panscan_hdl->initialize(10))
   {
-    ALOGE("ERROR: Allocating memory for panscan!");
+    DEBUG_PRINT_ERROR("ERROR: Allocating memory for panscan!");
     delete panscan_hdl;
     panscan_hdl = NULL;
   }
@@ -583,7 +584,7 @@ void h264_stream_parser::init_bitstream(OMX_U8* data, OMX_U32 size)
 void h264_stream_parser::parse_vui(bool vui_in_extradata)
 {
   OMX_U32 value = 0;
-  ALOGV("parse_vui: IN");
+  DEBUG_PRINT_LOW("parse_vui: IN");
   if (vui_in_extradata)
     while (!extract_bits(1) && more_bits()); // Discard VUI enable flag
   if (!more_bits())
@@ -592,7 +593,7 @@ void h264_stream_parser::parse_vui(bool vui_in_extradata)
   vui_param.aspect_ratio_info_present_flag = extract_bits(1); //aspect_ratio_info_present_flag
   if (vui_param.aspect_ratio_info_present_flag)
   {
-      ALOGV("Aspect Ratio Info present!");
+      DEBUG_PRINT_LOW("Aspect Ratio Info present!");
       aspect_ratio_info();
   }
 
@@ -620,28 +621,28 @@ void h264_stream_parser::parse_vui(bool vui_in_extradata)
     vui_param.num_units_in_tick = extract_bits(32);
     vui_param.time_scale = extract_bits(32);
     vui_param.fixed_frame_rate_flag = extract_bits(1);
-    ALOGV("Timing info present in VUI!");
-    ALOGV("  num units in tick  : %u", vui_param.num_units_in_tick);
-    ALOGV("  time scale         : %u", vui_param.time_scale);
-    ALOGV("  fixed frame rate   : %u", vui_param.fixed_frame_rate_flag);
+    DEBUG_PRINT_LOW("Timing info present in VUI!");
+    DEBUG_PRINT_LOW("  num units in tick  : %u", vui_param.num_units_in_tick);
+    DEBUG_PRINT_LOW("  time scale         : %u", vui_param.time_scale);
+    DEBUG_PRINT_LOW("  fixed frame rate   : %u", vui_param.fixed_frame_rate_flag);
   }
   vui_param.nal_hrd_parameters_present_flag = extract_bits(1);
   if (vui_param.nal_hrd_parameters_present_flag)
   {
-    ALOGV("nal hrd params present!");
+    DEBUG_PRINT_LOW("nal hrd params present!");
     hrd_parameters(&vui_param.nal_hrd_parameters);
   }
   vui_param.vcl_hrd_parameters_present_flag = extract_bits(1);
   if (vui_param.vcl_hrd_parameters_present_flag)
   {
-    ALOGV("vcl hrd params present!");
+    DEBUG_PRINT_LOW("vcl hrd params present!");
     hrd_parameters(&vui_param.vcl_hrd_parameters);
   }
   if (vui_param.nal_hrd_parameters_present_flag ||
       vui_param.vcl_hrd_parameters_present_flag)
     vui_param.low_delay_hrd_flag = extract_bits(1);
   vui_param.pic_struct_present_flag = extract_bits(1);
-  ALOGV("pic_struct_present_flag : %u", vui_param.pic_struct_present_flag);
+  DEBUG_PRINT_LOW("pic_struct_present_flag : %u", vui_param.pic_struct_present_flag);
   if (extract_bits(1)) //bitstream_restriction_flag
   {
     extract_bits(1); //motion_vectors_over_pic_boundaries_flag
@@ -652,12 +653,12 @@ void h264_stream_parser::parse_vui(bool vui_in_extradata)
     uev(); //num_reorder_frames
     uev(); //max_dec_frame_buffering
   }
-  ALOGV("parse_vui: OUT");
+  DEBUG_PRINT_LOW("parse_vui: OUT");
 }
 
 void h264_stream_parser::aspect_ratio_info()
 {
-  ALOGV("aspect_ratio_info: IN");
+  DEBUG_PRINT_LOW("aspect_ratio_info: IN");
   OMX_U32  aspect_ratio_idc = 0;
   OMX_U32  aspect_ratio_x = 0;
   OMX_U32  aspect_ratio_y = 0;
@@ -733,31 +734,31 @@ void h264_stream_parser::aspect_ratio_info()
       aspect_ratio_y = extract_bits(16); //sar_height
       break;
     default:
-      ALOGV("-->aspect_ratio_idc: Reserved Value ");
+      DEBUG_PRINT_LOW("-->aspect_ratio_idc: Reserved Value ");
       break;
   }
-  ALOGV("-->aspect_ratio_idc        : %u", aspect_ratio_idc);
-  ALOGV("-->aspect_ratio_x          : %u", aspect_ratio_x);
-  ALOGV("-->aspect_ratio_y          : %u", aspect_ratio_y);
+  DEBUG_PRINT_LOW("-->aspect_ratio_idc        : %u", aspect_ratio_idc);
+  DEBUG_PRINT_LOW("-->aspect_ratio_x          : %u", aspect_ratio_x);
+  DEBUG_PRINT_LOW("-->aspect_ratio_y          : %u", aspect_ratio_y);
   vui_param.aspect_ratio_info.aspect_ratio_idc = aspect_ratio_idc;
   vui_param.aspect_ratio_info.aspect_ratio_x = aspect_ratio_x;
   vui_param.aspect_ratio_info.aspect_ratio_y = aspect_ratio_y;
-  ALOGV("aspect_ratio_info: OUT");
+  DEBUG_PRINT_LOW("aspect_ratio_info: OUT");
 }
 
 void h264_stream_parser::hrd_parameters(h264_hrd_param *hrd_param)
 {
   int idx;
-  ALOGV("hrd_parameters: IN");
+  DEBUG_PRINT_LOW("hrd_parameters: IN");
   hrd_param->cpb_cnt = uev() + 1;
   hrd_param->bit_rate_scale = extract_bits(4);
   hrd_param->cpb_size_scale = extract_bits(4);
-  ALOGV("-->cpb_cnt        : %u", hrd_param->cpb_cnt);
-  ALOGV("-->bit_rate_scale : %u", hrd_param->bit_rate_scale);
-  ALOGV("-->cpb_size_scale : %u", hrd_param->cpb_size_scale);
+  DEBUG_PRINT_LOW("-->cpb_cnt        : %u", hrd_param->cpb_cnt);
+  DEBUG_PRINT_LOW("-->bit_rate_scale : %u", hrd_param->bit_rate_scale);
+  DEBUG_PRINT_LOW("-->cpb_size_scale : %u", hrd_param->cpb_size_scale);
   if (hrd_param->cpb_cnt > MAX_CPB_COUNT)
   {
-    ALOGV("ERROR: Invalid hrd_param->cpb_cnt [%u]!", hrd_param->cpb_cnt);
+    DEBUG_PRINT_LOW("ERROR: Invalid hrd_param->cpb_cnt [%u]!", hrd_param->cpb_cnt);
     return;
   }
   for (idx = 0; idx < hrd_param->cpb_cnt && more_bits(); idx++)
@@ -765,19 +766,19 @@ void h264_stream_parser::hrd_parameters(h264_hrd_param *hrd_param)
     hrd_param->bit_rate_value[idx] = uev() + 1;
     hrd_param->cpb_size_value[idx] = uev() + 1;
     hrd_param->cbr_flag[idx] = extract_bits(1);
-    ALOGV("-->bit_rate_value [%d] : %u", idx, hrd_param->bit_rate_value[idx]);
-    ALOGV("-->cpb_size_value [%d] : %u", idx, hrd_param->cpb_size_value[idx]);
-    ALOGV("-->cbr_flag       [%d] : %u", idx, hrd_param->cbr_flag[idx]);
+    DEBUG_PRINT_LOW("-->bit_rate_value [%d] : %u", idx, hrd_param->bit_rate_value[idx]);
+    DEBUG_PRINT_LOW("-->cpb_size_value [%d] : %u", idx, hrd_param->cpb_size_value[idx]);
+    DEBUG_PRINT_LOW("-->cbr_flag       [%d] : %u", idx, hrd_param->cbr_flag[idx]);
   }
   hrd_param->initial_cpb_removal_delay_length = extract_bits(5) + 1;
   hrd_param->cpb_removal_delay_length = extract_bits(5) + 1;
   hrd_param->dpb_output_delay_length = extract_bits(5) + 1;
   hrd_param->time_offset_length = extract_bits(5);
-  ALOGV("-->initial_cpb_removal_delay_length : %u", hrd_param->initial_cpb_removal_delay_length);
-  ALOGV("-->cpb_removal_delay_length         : %u", hrd_param->cpb_removal_delay_length);
-  ALOGV("-->dpb_output_delay_length          : %u", hrd_param->dpb_output_delay_length);
-  ALOGV("-->time_offset_length               : %u", hrd_param->time_offset_length);
-  ALOGV("hrd_parameters: OUT");
+  DEBUG_PRINT_LOW("-->initial_cpb_removal_delay_length : %u", hrd_param->initial_cpb_removal_delay_length);
+  DEBUG_PRINT_LOW("-->cpb_removal_delay_length         : %u", hrd_param->cpb_removal_delay_length);
+  DEBUG_PRINT_LOW("-->dpb_output_delay_length          : %u", hrd_param->dpb_output_delay_length);
+  DEBUG_PRINT_LOW("-->time_offset_length               : %u", hrd_param->time_offset_length);
+  DEBUG_PRINT_LOW("hrd_parameters: OUT");
 }
 
 void h264_stream_parser::parse_sei()
@@ -785,24 +786,24 @@ void h264_stream_parser::parse_sei()
   OMX_U32 value = 0, processed_bytes = 0;
   OMX_U8 *sei_msg_start = bitstream;
   OMX_U32 sei_unit_size = bitstream_bytes;
-  ALOGV("@@parse_sei: IN sei_unit_size(%u)", sei_unit_size);
+  DEBUG_PRINT_LOW("@@parse_sei: IN sei_unit_size(%u)", sei_unit_size);
   while ((processed_bytes + 2) < sei_unit_size && more_bits())
   {
     init_bitstream(sei_msg_start + processed_bytes, sei_unit_size - processed_bytes);
-    ALOGV("-->NALU_TYPE_SEI");
+    DEBUG_PRINT_LOW("-->NALU_TYPE_SEI");
     OMX_U32 payload_type = 0, payload_size = 0, aux = 0;
     do {
       value = extract_bits(8);
       payload_type += value;
       processed_bytes++;
     } while (value == 0xFF);
-    ALOGV("-->payload_type   : %u", payload_type);
+    DEBUG_PRINT_LOW("-->payload_type   : %u", payload_type);
     do {
       value = extract_bits(8);
       payload_size += value;
       processed_bytes++;
     } while (value == 0xFF);
-    ALOGV("-->payload_size   : %u", payload_size);
+    DEBUG_PRINT_LOW("-->payload_size   : %u", payload_size);
     if (payload_size > 0)
     {
       switch (payload_type)
@@ -820,13 +821,13 @@ void h264_stream_parser::parse_sei()
           parse_frame_pack();
         break;
         default:
-          ALOGV("-->SEI payload type [%u] not implemented! size[%u]", payload_type, payload_size);
+          DEBUG_PRINT_LOW("-->SEI payload type [%u] not implemented! size[%u]", payload_type, payload_size);
       }
     }
     processed_bytes += (payload_size + emulation_code_skip_cntr);
-    ALOGV("-->SEI processed_bytes[%u]", processed_bytes);
+    DEBUG_PRINT_LOW("-->SEI processed_bytes[%u]", processed_bytes);
   }
-  ALOGV("@@parse_sei: OUT");
+  DEBUG_PRINT_LOW("@@parse_sei: OUT");
 }
 
 void h264_stream_parser::sei_buffering_period()
@@ -834,12 +835,12 @@ void h264_stream_parser::sei_buffering_period()
   int idx;
   OMX_U32 value = 0;
   h264_hrd_param *hrd_param = NULL;
-  ALOGV("@@sei_buffering_period: IN");
+  DEBUG_PRINT_LOW("@@sei_buffering_period: IN");
   value = uev(); // seq_parameter_set_id
-  ALOGV("-->seq_parameter_set_id : %u", value);
+  DEBUG_PRINT_LOW("-->seq_parameter_set_id : %u", value);
   if (value > 31)
   {
-    ALOGV("ERROR: Invalid seq_parameter_set_id [%u]!", value);
+    DEBUG_PRINT_LOW("ERROR: Invalid seq_parameter_set_id [%u]!", value);
     return;
   }
   sei_buf_period.is_valid = false;
@@ -848,7 +849,7 @@ void h264_stream_parser::sei_buffering_period()
     hrd_param = &vui_param.nal_hrd_parameters;
     if (hrd_param->cpb_cnt > MAX_CPB_COUNT)
     {
-      ALOGV("ERROR: Invalid hrd_param->cpb_cnt [%u]!", hrd_param->cpb_cnt);
+      DEBUG_PRINT_LOW("ERROR: Invalid hrd_param->cpb_cnt [%u]!", hrd_param->cpb_cnt);
       return;
     }
     for (idx = 0; idx < hrd_param->cpb_cnt ; idx++)
@@ -856,8 +857,8 @@ void h264_stream_parser::sei_buffering_period()
       sei_buf_period.is_valid = true;
       sei_buf_period.initial_cpb_removal_delay[idx] = extract_bits(hrd_param->initial_cpb_removal_delay_length);
       sei_buf_period.initial_cpb_removal_delay_offset[idx] = extract_bits(hrd_param->initial_cpb_removal_delay_length);
-      ALOGV("-->initial_cpb_removal_delay        : %u", sei_buf_period.initial_cpb_removal_delay[idx]);
-      ALOGV("-->initial_cpb_removal_delay_offset : %u", sei_buf_period.initial_cpb_removal_delay_offset[idx]);
+      DEBUG_PRINT_LOW("-->initial_cpb_removal_delay        : %u", sei_buf_period.initial_cpb_removal_delay[idx]);
+      DEBUG_PRINT_LOW("-->initial_cpb_removal_delay_offset : %u", sei_buf_period.initial_cpb_removal_delay_offset[idx]);
     }
   }
   if (vui_param.vcl_hrd_parameters_present_flag)
@@ -865,7 +866,7 @@ void h264_stream_parser::sei_buffering_period()
     hrd_param = &vui_param.vcl_hrd_parameters;
     if (hrd_param->cpb_cnt > MAX_CPB_COUNT)
     {
-      ALOGV("ERROR: Invalid hrd_param->cpb_cnt [%u]!", hrd_param->cpb_cnt);
+      DEBUG_PRINT_LOW("ERROR: Invalid hrd_param->cpb_cnt [%u]!", hrd_param->cpb_cnt);
       return;
     }
     for (idx = 0; idx < hrd_param->cpb_cnt ; idx++)
@@ -873,17 +874,17 @@ void h264_stream_parser::sei_buffering_period()
       sei_buf_period.is_valid = true;
       sei_buf_period.initial_cpb_removal_delay[idx] = extract_bits(hrd_param->initial_cpb_removal_delay_length);
       sei_buf_period.initial_cpb_removal_delay_offset[idx] = extract_bits(hrd_param->initial_cpb_removal_delay_length);
-      ALOGV("-->initial_cpb_removal_delay        : %u", sei_buf_period.initial_cpb_removal_delay[idx]);
-      ALOGV("-->initial_cpb_removal_delay_offset : %u", sei_buf_period.initial_cpb_removal_delay_offset[idx]);
+      DEBUG_PRINT_LOW("-->initial_cpb_removal_delay        : %u", sei_buf_period.initial_cpb_removal_delay[idx]);
+      DEBUG_PRINT_LOW("-->initial_cpb_removal_delay_offset : %u", sei_buf_period.initial_cpb_removal_delay_offset[idx]);
     }
   }
   sei_buf_period.au_cntr = 0;
-  ALOGV("@@sei_buffering_period: OUT");
+  DEBUG_PRINT_LOW("@@sei_buffering_period: OUT");
 }
 
 void h264_stream_parser::sei_picture_timing()
 {
-  ALOGV("@@sei_picture_timing: IN");
+  DEBUG_PRINT_LOW("@@sei_picture_timing: IN");
   OMX_U32 time_offset_len = 0, cpb_removal_len = 24, dpb_output_len  = 24;
   OMX_U8 cbr_flag = 0;
   sei_pic_timing.is_valid = true;
@@ -903,10 +904,10 @@ void h264_stream_parser::sei_picture_timing()
   }
   sei_pic_timing.cpb_removal_delay = extract_bits(cpb_removal_len);
   sei_pic_timing.dpb_output_delay = extract_bits(dpb_output_len);
-  ALOGV("-->cpb_removal_len : %u", cpb_removal_len);
-  ALOGV("-->dpb_output_len  : %u", dpb_output_len);
-  ALOGV("-->cpb_removal_delay : %u", sei_pic_timing.cpb_removal_delay);
-  ALOGV("-->dpb_output_delay  : %u", sei_pic_timing.dpb_output_delay);
+  DEBUG_PRINT_LOW("-->cpb_removal_len : %u", cpb_removal_len);
+  DEBUG_PRINT_LOW("-->dpb_output_len  : %u", dpb_output_len);
+  DEBUG_PRINT_LOW("-->cpb_removal_delay : %u", sei_pic_timing.cpb_removal_delay);
+  DEBUG_PRINT_LOW("-->dpb_output_delay  : %u", sei_pic_timing.dpb_output_delay);
   if (vui_param.pic_struct_present_flag)
   {
     sei_pic_timing.pic_struct = extract_bits(4);
@@ -917,15 +918,15 @@ void h264_stream_parser::sei_picture_timing()
       case 3: case 4: case 7: sei_pic_timing.num_clock_ts = 2; break;
       case 5: case 6: case 8: sei_pic_timing.num_clock_ts = 3; break;
       default:
-        ALOGE("sei_picture_timing: pic_struct invalid!");
+        DEBUG_PRINT_ERROR("sei_picture_timing: pic_struct invalid!");
     }
-    ALOGV("-->num_clock_ts      : %u", sei_pic_timing.num_clock_ts);
+    DEBUG_PRINT_LOW("-->num_clock_ts      : %u", sei_pic_timing.num_clock_ts);
     for (int i = 0; i < sei_pic_timing.num_clock_ts && more_bits(); i++)
     {
       sei_pic_timing.clock_ts_flag = extract_bits(1);
       if(sei_pic_timing.clock_ts_flag)
       {
-        ALOGV("-->clock_timestamp present!");
+        DEBUG_PRINT_LOW("-->clock_timestamp present!");
         sei_pic_timing.ct_type = extract_bits(2);
         sei_pic_timing.nuit_field_based_flag = extract_bits(1);
         sei_pic_timing.counting_type = extract_bits(5);
@@ -933,8 +934,8 @@ void h264_stream_parser::sei_picture_timing()
         sei_pic_timing.discontinuity_flag = extract_bits(1);
         sei_pic_timing.cnt_dropped_flag = extract_bits(1);
         sei_pic_timing.n_frames = extract_bits(8);
-        ALOGV("-->f_timestamp_flg   : %u", sei_pic_timing.full_timestamp_flag);
-        ALOGV("-->n_frames          : %u", sei_pic_timing.n_frames);
+        DEBUG_PRINT_LOW("-->f_timestamp_flg   : %u", sei_pic_timing.full_timestamp_flag);
+        DEBUG_PRINT_LOW("-->n_frames          : %u", sei_pic_timing.n_frames);
         sei_pic_timing.seconds_value = 0;
         sei_pic_timing.minutes_value = 0;
         sei_pic_timing.hours_value = 0;
@@ -946,15 +947,15 @@ void h264_stream_parser::sei_picture_timing()
         }
         else if (extract_bits(1))
         {
-          ALOGV("-->seconds_flag enabled!");
+          DEBUG_PRINT_LOW("-->seconds_flag enabled!");
           sei_pic_timing.seconds_value = extract_bits(6);
           if (extract_bits(1))
           {
-            ALOGV("-->minutes_flag enabled!");
+            DEBUG_PRINT_LOW("-->minutes_flag enabled!");
             sei_pic_timing.minutes_value = extract_bits(6);
             if (extract_bits(1))
             {
-              ALOGV("-->hours_flag enabled!");
+              DEBUG_PRINT_LOW("-->hours_flag enabled!");
               sei_pic_timing.hours_value = extract_bits(5);
             }
           }
@@ -962,14 +963,14 @@ void h264_stream_parser::sei_picture_timing()
         sei_pic_timing.time_offset = 0;
         if (time_offset_len > 0)
           sei_pic_timing.time_offset = iv(time_offset_len);
-        ALOGV("-->seconds_value     : %u", sei_pic_timing.seconds_value);
-        ALOGV("-->minutes_value     : %u", sei_pic_timing.minutes_value);
-        ALOGV("-->hours_value       : %u", sei_pic_timing.hours_value);
-        ALOGV("-->time_offset       : %d", sei_pic_timing.time_offset);
+        DEBUG_PRINT_LOW("-->seconds_value     : %u", sei_pic_timing.seconds_value);
+        DEBUG_PRINT_LOW("-->minutes_value     : %u", sei_pic_timing.minutes_value);
+        DEBUG_PRINT_LOW("-->hours_value       : %u", sei_pic_timing.hours_value);
+        DEBUG_PRINT_LOW("-->time_offset       : %d", sei_pic_timing.time_offset);
       }
     }
   }
-  ALOGV("@@sei_picture_timing: OUT");
+  DEBUG_PRINT_LOW("@@sei_picture_timing: OUT");
 }
 
 void h264_stream_parser::sei_pan_scan()
@@ -988,14 +989,14 @@ void h264_stream_parser::sei_pan_scan()
 
   if (!pan_scan_param)
   {
-    ALOGE("sei_pan_scan: ERROR: Invalid pointer!");
+    DEBUG_PRINT_ERROR("sei_pan_scan: ERROR: Invalid pointer!");
     return;
   }
 
   pan_scan_param->rect_id = uev();
   if (pan_scan_param->rect_id > 0xFF)
   {
-    ALOGE("sei_pan_scan: ERROR: Invalid rect_id[%u]!", pan_scan_param->rect_id);
+    DEBUG_PRINT_ERROR("sei_pan_scan: ERROR: Invalid rect_id[%u]!", pan_scan_param->rect_id);
     pan_scan_param->rect_id = NO_PAN_SCAN_BIT;
     return;
   }
@@ -1009,7 +1010,7 @@ void h264_stream_parser::sei_pan_scan()
     pan_scan_param->cnt = uev() + 1;
     if (pan_scan_param->cnt > MAX_PAN_SCAN_RECT)
     {
-      ALOGE("sei_pan_scan: ERROR: Invalid num of rect [%u]!", pan_scan_param->cnt);
+      DEBUG_PRINT_ERROR("sei_pan_scan: ERROR: Invalid num of rect [%u]!", pan_scan_param->cnt);
       pan_scan_param->rect_id = NO_PAN_SCAN_BIT;
       return;
     }
@@ -1039,29 +1040,29 @@ void h264_stream_parser::sei_pan_scan()
 
 void h264_stream_parser::print_pan_data(h264_pan_scan *pan_scan_param)
 {
-  ALOGE("@@print_pan_data: IN");
+  DEBUG_PRINT_LOW("@@print_pan_data: IN");
 
-  ALOGE("-->rect_id            : %u", pan_scan_param->rect_id);
-  ALOGE("-->rect_cancel_flag   : %u", pan_scan_param->rect_cancel_flag);
+  DEBUG_PRINT_LOW("-->rect_id            : %u", pan_scan_param->rect_id);
+  DEBUG_PRINT_LOW("-->rect_cancel_flag   : %u", pan_scan_param->rect_cancel_flag);
 
-  ALOGV("-->cnt                : %u", pan_scan_param->cnt);
+  DEBUG_PRINT_LOW("-->cnt                : %u", pan_scan_param->cnt);
 
   for (int i = 0; i < pan_scan_param->cnt; i++)
   {
-    ALOGE("-->rect_left_offset   : %d", pan_scan_param->rect_left_offset[i]);
-    ALOGE("-->rect_right_offset  : %d", pan_scan_param->rect_right_offset[i]);
-    ALOGE("-->rect_top_offset    : %d", pan_scan_param->rect_top_offset[i]);
-    ALOGE("-->rect_bottom_offset : %d", pan_scan_param->rect_bottom_offset[i]);
+    DEBUG_PRINT_LOW("-->rect_left_offset   : %d", pan_scan_param->rect_left_offset[i]);
+    DEBUG_PRINT_LOW("-->rect_right_offset  : %d", pan_scan_param->rect_right_offset[i]);
+    DEBUG_PRINT_LOW("-->rect_top_offset    : %d", pan_scan_param->rect_top_offset[i]);
+    DEBUG_PRINT_LOW("-->rect_bottom_offset : %d", pan_scan_param->rect_bottom_offset[i]);
   }
-  ALOGE("-->repetition_period  : %u", pan_scan_param->rect_repetition_period);
+  DEBUG_PRINT_LOW("-->repetition_period  : %u", pan_scan_param->rect_repetition_period);
 
-  ALOGE("@@print_pan_data: OUT");
+  DEBUG_PRINT_LOW("@@print_pan_data: OUT");
 }
 
 void h264_stream_parser::parse_sps()
 {
   OMX_U32 value = 0, scaling_matrix_limit;
-  ALOGV("@@parse_sps: IN");
+  DEBUG_PRINT_LOW("@@parse_sps: IN");
   value = extract_bits(8); //profile_idc
   extract_bits(8); //constraint flags and reserved bits
   extract_bits(8); //level_idc
@@ -1118,7 +1119,7 @@ void h264_stream_parser::parse_sps()
   }
   if (extract_bits(1)) //vui_parameters_present_flag
     parse_vui(false);
-  ALOGV("@@parse_sps: OUT");
+  DEBUG_PRINT_LOW("@@parse_sps: OUT");
 }
 
 void h264_stream_parser::scaling_list(OMX_U32 size_of_scaling_list)
@@ -1140,7 +1141,7 @@ OMX_U32 h264_stream_parser::extract_bits(OMX_U32 n)
   OMX_U32 value = 0;
   if (n > 32)
   {
-    ALOGE("ERROR: extract_bits limit to 32 bits!");
+    DEBUG_PRINT_ERROR("ERROR: extract_bits limit to 32 bits!");
     return value;
   }
   value = curr_32_bit >> (32 - n);
@@ -1151,7 +1152,7 @@ OMX_U32 h264_stream_parser::extract_bits(OMX_U32 n)
     value |= (curr_32_bit >> (32 - n));
     if (bits_read < n)
     {
-      ALOGV("ERROR: extract_bits underflow!");
+      DEBUG_PRINT_LOW("ERROR: extract_bits underflow!");
       value >>= (n - bits_read);
       n = bits_read;
     }
@@ -1170,7 +1171,7 @@ void h264_stream_parser::read_word()
     if (*bitstream == EMULATION_PREVENTION_THREE_BYTE &&
         zero_cntr >= 2 && emulation_sc_enabled)
     {
-      ALOGV("EMULATION_PREVENTION_THREE_BYTE: Skip 0x03 byte aligned!");
+      DEBUG_PRINT_LOW("EMULATION_PREVENTION_THREE_BYTE: Skip 0x03 byte aligned!");
       emulation_code_skip_cntr++;
     }
     else
@@ -1223,7 +1224,7 @@ OMX_U32 h264_stream_parser::get_nal_unit_type(OMX_U32 *nal_unit_type)
 {
   OMX_U32 value = 0, consumed_bytes = 3;
   *nal_unit_type = NALU_TYPE_UNSPECIFIED;
-  ALOGV("-->get_nal_unit_type: IN");
+  DEBUG_PRINT_LOW("-->get_nal_unit_type: IN");
   value = extract_bits(24);
   while (value != 0x00000001 && more_bits())
   {
@@ -1233,32 +1234,32 @@ OMX_U32 h264_stream_parser::get_nal_unit_type(OMX_U32 *nal_unit_type)
   }
   if (value != 0x00000001)
   {
-    ALOGE("ERROR in get_nal_unit_type: Start code not found!");
+    DEBUG_PRINT_ERROR("ERROR in get_nal_unit_type: Start code not found!");
   }
   else
   {
     if (extract_bits(1)) // forbidden_zero_bit
     {
-      ALOGE("WARNING: forbidden_zero_bit should be zero!");
+      DEBUG_PRINT_ERROR("WARNING: forbidden_zero_bit should be zero!");
     }
     value = extract_bits(2);
-    ALOGV("-->nal_ref_idc    : %x", value);
+    DEBUG_PRINT_LOW("-->nal_ref_idc    : %x", value);
     *nal_unit_type = extract_bits(5);
-    ALOGV("-->nal_unit_type  : %x", *nal_unit_type);
+    DEBUG_PRINT_LOW("-->nal_unit_type  : %x", *nal_unit_type);
     consumed_bytes++;
     if (consumed_bytes > 5)
     {
-      ALOGE("-->WARNING: Startcode was found after the first 4 bytes!");
+      DEBUG_PRINT_ERROR("-->WARNING: Startcode was found after the first 4 bytes!");
     }
   }
-  ALOGV("-->get_nal_unit_type: OUT");
+  DEBUG_PRINT_LOW("-->get_nal_unit_type: OUT");
   return consumed_bytes;
 }
 
 OMX_S64 h264_stream_parser::calculate_buf_period_ts(OMX_S64 timestamp)
 {
   OMX_S64 clock_ts = timestamp;
-  ALOGV("calculate_ts(): IN");
+  DEBUG_PRINT_LOW("calculate_ts(): IN");
   if (sei_buf_period.au_cntr == 0)
     clock_ts = sei_buf_period.reference_ts = timestamp;
   else if (sei_pic_timing.is_valid && VALID_TS(sei_buf_period.reference_ts))
@@ -1267,7 +1268,7 @@ OMX_S64 h264_stream_parser::calculate_buf_period_ts(OMX_S64 timestamp)
                1e6 * vui_param.num_units_in_tick / vui_param.time_scale;
   }
   sei_buf_period.au_cntr++;
-  ALOGV("calculate_ts(): OUT");
+  DEBUG_PRINT_LOW("calculate_ts(): OUT");
   return clock_ts;
 }
 
@@ -1290,7 +1291,7 @@ void h264_stream_parser::parse_frame_pack()
   property_get("vidc.dec.debug.panframedata", property_value, "0");
   enable_framepack_log = atoi(property_value);
 #endif
-  ALOGV("\n%s:%d parse_frame_pack", __func__, __LINE__);
+  DEBUG_PRINT_LOW("\n%s:%d parse_frame_pack", __func__, __LINE__);
 
   frame_packing_arrangement.id = uev();
 
@@ -1328,34 +1329,34 @@ void h264_stream_parser::parse_frame_pack()
 
 void h264_stream_parser::print_frame_pack()
 {
-  ALOGE("\n ## frame_packing_arrangement.id = %u", frame_packing_arrangement.id);
-  ALOGE("\n ## frame_packing_arrangement.cancel_flag = %u",
+  DEBUG_PRINT_LOW("\n ## frame_packing_arrangement.id = %u", frame_packing_arrangement.id);
+  DEBUG_PRINT_LOW("\n ## frame_packing_arrangement.cancel_flag = %u",
                        frame_packing_arrangement.cancel_flag);
   if(!frame_packing_arrangement.cancel_flag)
   {
-    ALOGE("\n ## frame_packing_arrangement.type = %u",
+    DEBUG_PRINT_LOW("\n ## frame_packing_arrangement.type = %u",
                          frame_packing_arrangement.type);
-    ALOGE("\n ## frame_packing_arrangement.quincunx_sampling_flag = %u",
+    DEBUG_PRINT_LOW("\n ## frame_packing_arrangement.quincunx_sampling_flag = %u",
                          frame_packing_arrangement.quincunx_sampling_flag);
-    ALOGE("\n ## frame_packing_arrangement.content_interpretation_type = %u",
+    DEBUG_PRINT_LOW("\n ## frame_packing_arrangement.content_interpretation_type = %u",
                          frame_packing_arrangement.content_interpretation_type);
-    ALOGE("\n ## frame_packing_arrangement.spatial_flipping_flag = %u",
+    DEBUG_PRINT_LOW("\n ## frame_packing_arrangement.spatial_flipping_flag = %u",
                          frame_packing_arrangement.spatial_flipping_flag);
-    ALOGE("\n ## frame_packing_arrangement.frame0_flipped_flag = %u",
+    DEBUG_PRINT_LOW("\n ## frame_packing_arrangement.frame0_flipped_flag = %u",
                          frame_packing_arrangement.frame0_flipped_flag);
-    ALOGE("\n ## frame_packing_arrangement.field_views_flag = %u",
+    DEBUG_PRINT_LOW("\n ## frame_packing_arrangement.field_views_flag = %u",
                          frame_packing_arrangement.field_views_flag);
-    ALOGE("\n ## frame_packing_arrangement.current_frame_is_frame0_flag = %u",
+    DEBUG_PRINT_LOW("\n ## frame_packing_arrangement.current_frame_is_frame0_flag = %u",
                          frame_packing_arrangement.current_frame_is_frame0_flag);
-    ALOGE("\n ## frame_packing_arrangement.frame0_self_contained_flag = %u",
+    DEBUG_PRINT_LOW("\n ## frame_packing_arrangement.frame0_self_contained_flag = %u",
                          frame_packing_arrangement.frame0_self_contained_flag);
-    ALOGE("\n ## frame_packing_arrangement.frame1_self_contained_flag = %u",
+    DEBUG_PRINT_LOW("\n ## frame_packing_arrangement.frame1_self_contained_flag = %u",
                          frame_packing_arrangement.frame1_self_contained_flag);
-    ALOGE("\n ## frame_packing_arrangement.reserved_byte = %u",
+    DEBUG_PRINT_LOW("\n ## frame_packing_arrangement.reserved_byte = %u",
                          frame_packing_arrangement.reserved_byte);
-    ALOGE("\n ## frame_packing_arrangement.repetition_period = %u",
+    DEBUG_PRINT_LOW("\n ## frame_packing_arrangement.repetition_period = %u",
                          frame_packing_arrangement.repetition_period);
-    ALOGE("\n ## frame_packing_arrangement.extension_flag = %u",
+    DEBUG_PRINT_LOW("\n ## frame_packing_arrangement.extension_flag = %u",
                          frame_packing_arrangement.extension_flag);
   }
 }
@@ -1364,7 +1365,7 @@ void h264_stream_parser::print_frame_pack()
 void h264_stream_parser::get_frame_pack_data(
   OMX_QCOM_FRAME_PACK_ARRANGEMENT *frame_pack)
 {
-   ALOGV("\n%s:%d get frame data", __func__, __LINE__);
+   DEBUG_PRINT_LOW("\n%s:%d get frame data", __func__, __LINE__);
    memcpy(&frame_pack->id,&frame_packing_arrangement.id,
    FRAME_PACK_SIZE*sizeof(OMX_U32));
    return;
@@ -1373,7 +1374,7 @@ void h264_stream_parser::get_frame_pack_data(
 
 bool h264_stream_parser::is_mbaff()
 {
-   ALOGV("\n%s:%d MBAFF flag=%d", __func__, __LINE__,mbaff_flag);
+   DEBUG_PRINT_LOW("\n%s:%d MBAFF flag=%d", __func__, __LINE__,mbaff_flag);
    return mbaff_flag;
 }
 
@@ -1386,7 +1387,7 @@ void h264_stream_parser::get_frame_rate(OMX_U32 *frame_rate)
 void h264_stream_parser::parse_nal(OMX_U8* data_ptr, OMX_U32 data_len, OMX_U32 nal_type, bool enable_emu_sc)
 {
   OMX_U32 nal_unit_type = NALU_TYPE_UNSPECIFIED, cons_bytes = 0;
-  ALOGV("parse_nal(): IN nal_type(%lu)", nal_type);
+  DEBUG_PRINT_LOW("parse_nal(): IN nal_type(%lu)", nal_type);
   if (!data_len)
     return;
   init_bitstream(data_ptr, data_len);
@@ -1396,7 +1397,7 @@ void h264_stream_parser::parse_nal(OMX_U8* data_ptr, OMX_U32 data_len, OMX_U32 n
     cons_bytes = get_nal_unit_type(&nal_unit_type);
     if (nal_type != nal_unit_type && nal_type != NALU_TYPE_UNSPECIFIED)
     {
-      ALOGV("Unexpected nal_type(%x) expected(%x)", nal_unit_type, nal_type);
+      DEBUG_PRINT_LOW("Unexpected nal_type(%x) expected(%x)", nal_unit_type, nal_type);
       return;
     }
   }
@@ -1417,9 +1418,9 @@ void h264_stream_parser::parse_nal(OMX_U8* data_ptr, OMX_U32 data_len, OMX_U32 n
       parse_vui(true);
     break;
     default:
-      ALOGV("nal_unit_type received : %lu", nal_type);
+      DEBUG_PRINT_LOW("nal_unit_type received : %lu", nal_type);
   }
-  ALOGV("parse_nal(): OUT");
+  DEBUG_PRINT_LOW("parse_nal(): OUT");
 }
 
 #ifdef PANSCAN_HDLR
@@ -1484,7 +1485,7 @@ OMX_S64 h264_stream_parser::process_ts_with_sei_vui(OMX_S64 timestamp)
         clock_ts = ((sei_pic_timing.hours_value * 60 + sei_pic_timing.minutes_value) * 60 + sei_pic_timing.seconds_value) * 1e6 +
                     (sei_pic_timing.n_frames * (vui_param.num_units_in_tick * (1 + sei_pic_timing.nuit_field_based_flag)) + sei_pic_timing.time_offset) *
                     1e6 / vui_param.time_scale;
-        ALOGV("-->CLOCK TIMESTAMP   : %lld", clock_ts);
+        DEBUG_PRINT_LOW("-->CLOCK TIMESTAMP   : %lld", clock_ts);
         clock_ts_flag = true;
       }
       if (vui_param.fixed_frame_rate_flag)
@@ -1497,7 +1498,7 @@ OMX_S64 h264_stream_parser::process_ts_with_sei_vui(OMX_S64 timestamp)
           case 7:                 deltaTfiDivisor = 4; break;
           case 8:                 deltaTfiDivisor = 6; break;
           default:
-            ALOGE("process_ts_with_sei_vui: pic_struct invalid!");
+            DEBUG_PRINT_ERROR("process_ts_with_sei_vui: pic_struct invalid!");
         }
       }
     }
@@ -1511,7 +1512,7 @@ OMX_S64 h264_stream_parser::process_ts_with_sei_vui(OMX_S64 timestamp)
   }
   else
   {
-    ALOGV("NO TIMING information present in VUI!");
+    DEBUG_PRINT_LOW("NO TIMING information present in VUI!");
   }
   sei_pic_timing.is_valid = false; // SEI data is valid only for current frame
   return clock_ts;
@@ -1544,7 +1545,7 @@ bool panscan_handler::initialize(int num_data)
   }
   else
   {
-    ALOGE("ERROR: Old panscan memory must be freed to allocate new");
+    DEBUG_PRINT_ERROR("ERROR: Old panscan memory must be freed to allocate new");
   }
   return ret;
 }
