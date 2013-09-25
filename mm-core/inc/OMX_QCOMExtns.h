@@ -413,7 +413,9 @@ enum OMX_QCOM_EXTN_INDEXTYPE
     QOMX_IndexConfigVideoLTRUse = 0x7F00002B,
 
     /*"OMX.QCOM.index.config.video.LTRMark"*/
-    QOMX_IndexConfigVideoLTRMark = 0x7F00002C
+    QOMX_IndexConfigVideoLTRMark = 0x7F00002C,
+
+    OMX_GoogleAndroidIndexPrepareForAdaptivePlayback = 0x7F00002D,
 };
 
 /**
@@ -712,6 +714,16 @@ typedef struct OMX_QCOM_VIDEO_CONFIG_QPRANGE
    OMX_U32 nMinQP;          /** The number for minimum quantization parameter */
    OMX_U32 nMaxQP;          /** The number for maximum quantization parameter */
 } OMX_QCOM_VIDEO_CONFIG_QPRANGE;
+
+typedef struct PrepareForAdaptivePlaybackParams
+{
+    OMX_U32 nSize;
+    OMX_VERSIONTYPE nVersion;
+    OMX_U32 nPortIndex;
+    OMX_BOOL bEnable;
+    OMX_U32 nMaxFrameWidth;
+    OMX_U32 nMaxFrameHeight;
+} PrepareForAdaptivePlaybackParams;
 
 
 typedef struct OMX_VENDOR_EXTRADATATYPE  {
