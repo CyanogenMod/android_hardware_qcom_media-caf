@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-Copyright (c) 2010-2013, The Linux Foundation. All rights reserved.
+copyright (c) 2013, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -25,65 +25,37 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --------------------------------------------------------------------------*/
-#ifndef __DTSPARSER_H
-#define __DTSPARSER_H
 
-#include "OMX_Core.h"
-#include "OMX_QCOMExtns.h"
-#include "qc_omx_component.h"
-#include "vidc_debug.h"
-
-#include<stdlib.h>
-
-#include <stdio.h>
-#include <inttypes.h>
+#ifndef __VIDC_DEBUG_H__
+#define __VIDC_DEBUG_H__
 
 #ifdef _ANDROID_
-extern "C"{
-#include<utils/Log.h>
-}
-#else
-#define ALOGE(fmt, args...) fprintf(stderr, fmt, ##args)
-#endif /* _ANDROID_ */
+#include <cstdio>
 
-class omx_time_stamp_reorder {
-public:
-	omx_time_stamp_reorder();
-	~omx_time_stamp_reorder();
-	void set_timestamp_reorder_mode(bool flag);
-        void enable_debug_print(bool flag);
-	bool insert_timestamp(OMX_BUFFERHEADERTYPE *header);
-	bool get_next_timestamp(OMX_BUFFERHEADERTYPE *header, bool is_interlaced);
-	bool remove_time_stamp(OMX_TICKS ts, bool is_interlaced);
-	void flush_timestamp();
-
-private:
-	#define TIME_SZ 64
-	typedef struct timestamp {
-		OMX_TICKS timestamps;
-		bool in_use;
-	}timestamp;
-	typedef struct time_stamp_list {
-		timestamp input_timestamps[TIME_SZ];
-		time_stamp_list *next;
-		time_stamp_list *prev;
-		unsigned int entries_filled;
-	}time_stamp_list;
-	bool error;
-	time_stamp_list *phead,*pcurrent;
-	bool get_current_list();
-	bool add_new_list();
-	bool update_head();
-	void delete_list();
-	void handle_error()
-	{
-		DEBUG_PRINT_ERROR("Error handler called for TS Parser");
-		if (error)
-			return;
-		error = true;
-		delete_list();
-	}
-	bool reorder_ts;
-        bool print_debug;
+enum {
+   PRIO_ERROR=0x1,
+   PRIO_HIGH=0x2,
+   PRIO_LOW=0x4
 };
+
+extern int debug_level;
+
+#undef DEBUG_PRINT_ERROR
+#define DEBUG_PRINT_ERROR(fmt, args...) \
+      if (debug_level & PRIO_ERROR) \
+                ALOGE(fmt,##args)
+#undef DEBUG_PRINT_LOW
+#define DEBUG_PRINT_LOW(fmt, args...) \
+      if (debug_level & PRIO_LOW) \
+                ALOGD(fmt,##args)
+#undef DEBUG_PRINT_HIGH
+#define DEBUG_PRINT_HIGH(fmt, args...) \
+      if (debug_level & PRIO_HIGH) \
+                ALOGD(fmt,##args)
+#else
+#define DEBUG_PRINT_ERROR printf
+#define DEBUG_PRINT_LOW printf
+#define DEBUG_PRINT_HIGH printf
+#endif
+
 #endif

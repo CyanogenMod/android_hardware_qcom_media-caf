@@ -69,10 +69,6 @@ extern "C"{
 #define LOG_TAG "OMX-VDEC"
 #endif
 
-#else //_ANDROID_
-#define DEBUG_PRINT_LOW printf
-#define DEBUG_PRINT_HIGH printf
-#define DEBUG_PRINT_ERROR printf
 #endif // _ANDROID_
 
 #if defined (_ANDROID_HONEYCOMB_) || defined (_ANDROID_ICS_)
@@ -103,6 +99,7 @@ extern "C"{
 #include "extra_data_handler.h"
 #include "ts_parser.h"
 #include "vidc_color_converter.h"
+#include "vidc_debug.h"
 extern "C" {
   OMX_API void * get_omx_component_factory_fn(void);
 }
@@ -660,7 +657,7 @@ private:
     {
         if (m_cb.EventHandler && !m_error_propogated)
         {
-            ALOGE("\nERROR: Sending OMX_EventError to Client");
+            DEBUG_PRINT_ERROR("\nERROR: Sending OMX_EventError to Client");
             m_error_propogated = true;
             m_cb.EventHandler(&m_cmp,m_app_data,
                   OMX_EventError,OMX_ErrorHardware,0,NULL);
@@ -898,7 +895,8 @@ private:
         struct vidc_heap m_heap_ptr[MAX_COUNT];
     };
     allocate_color_convert_buf client_buffers;
-    static bool m_secure_display; //For qservice
+    static int m_secure_display; //For qservice
+    static pthread_mutex_t m_secure_display_lock;
     int secureDisplay(int mode);
     int unsecureDisplay(int mode);
     int set_turbo_mode(bool mode);
