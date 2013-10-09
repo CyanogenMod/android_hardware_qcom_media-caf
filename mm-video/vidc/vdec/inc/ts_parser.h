@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-Copyright (c) 2010-2013, The Linux Foundation. All rights reserved.
+Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -31,7 +31,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OMX_Core.h"
 #include "OMX_QCOMExtns.h"
 #include "qc_omx_component.h"
-#include "vidc_debug.h"
 
 #include<stdlib.h>
 
@@ -77,7 +76,7 @@ private:
 	void delete_list();
 	void handle_error()
 	{
-		DEBUG_PRINT_ERROR("Error handler called for TS Parser");
+		ALOGE("Error handler called for TS Parser");
 		if (error)
 			return;
 		error = true;
