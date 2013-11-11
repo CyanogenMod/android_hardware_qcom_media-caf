@@ -58,7 +58,7 @@ ifeq ($(TARGET_QCOM_DISPLAY_VARIANT),caf)
 DISPLAY := display-caf
 libOmxVdec-def += -DDISPLAYCAF
 else
-DISPLAY := display
+DISPLAY := display/$(TARGET_BOARD_PLATFORM)
 endif
 
 libmm-vdec-inc          := bionic/libc/include
