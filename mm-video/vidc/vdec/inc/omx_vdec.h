@@ -69,6 +69,10 @@ extern "C"{
 #define LOG_TAG "OMX-VDEC"
 #endif
 
+#else //_ANDROID_
+#define DEBUG_PRINT_LOW printf
+#define DEBUG_PRINT_HIGH printf
+#define DEBUG_PRINT_ERROR printf
 #endif // _ANDROID_
 
 #if defined (_ANDROID_HONEYCOMB_) || defined (_ANDROID_ICS_)
@@ -99,7 +103,6 @@ extern "C"{
 #include "extra_data_handler.h"
 #include "ts_parser.h"
 #include "vidc_color_converter.h"
-#include "vidc_debug.h"
 extern "C" {
   OMX_API void * get_omx_component_factory_fn(void);
 }
@@ -657,7 +660,7 @@ private:
     {
         if (m_cb.EventHandler && !m_error_propogated)
         {
-            DEBUG_PRINT_ERROR("\nERROR: Sending OMX_EventError to Client");
+            ALOGE("\nERROR: Sending OMX_EventError to Client");
             m_error_propogated = true;
             m_cb.EventHandler(&m_cmp,m_app_data,
                   OMX_EventError,OMX_ErrorHardware,0,NULL);
@@ -786,6 +789,9 @@ private:
     OMX_U32 m_demux_entries;
     OMX_U32 m_disp_hor_size;
     OMX_U32 m_disp_vert_size;
+    OMX_U32 m_smoothstreaming_height;
+    OMX_U32 m_smoothstreaming_width;
+    bool m_use_smoothstreaming;
 
     OMX_S64 prev_ts;
     bool rst_prev_ts;

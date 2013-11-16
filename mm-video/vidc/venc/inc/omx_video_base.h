@@ -61,7 +61,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <linux/videodev2.h>
 #include <dlfcn.h>
 #include "C2DColorConverter.h"
-#include "vidc_debug.h"
 
 #ifdef _ANDROID_
 using namespace android;
@@ -76,6 +75,10 @@ public:
 #include <utils/Log.h>
 #define LOG_TAG "OMX-VENC-720p"
 
+#else //_ANDROID_
+#define DEBUG_PRINT_LOW
+#define DEBUG_PRINT_HIGH
+#define DEBUG_PRINT_ERROR
 #endif // _ANDROID_
 
 #ifdef USE_ION
