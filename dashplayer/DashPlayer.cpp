@@ -1589,7 +1589,7 @@ status_t DashPlayer::setParameter(int key, const Parcel &request)
             return NO_MEMORY;
         }
 
-        utf16_to_utf8(str, len, (char*) data);
+        utf16_to_utf8(str, len, (char*) data, len);
         err = mSource->setParameter(key, data, len);
         free(data);
     }
